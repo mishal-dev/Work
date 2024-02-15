@@ -1,25 +1,33 @@
 import pgpy
 
-# Load the private key
-key_decrypt, _ = pgpy.PGPKey.from_file('priv.asc')
-
-# Define a user ID
-user_id = pgpy.PGPUID.new('User', email='user@example.com')
-
-# Add the user ID to the key
-with key_decrypt.unlock("your_passphrase"):  # Add your passphrase here if applicable
-    key_decrypt.add_uid(user_id)
-
-encrypted_data = b"\xc1\xc0L\x03/\x0b*8ga\xa2\xb8\x01\x07\xfb\x074\xf3\x06\x17Cu\xcf\xc7q\xe0\xbcn`}\xcc\xb1\xbe\x02\xd0\xf9X^\xbf\x836{-9\xd6\x0b\xe3\x9f\x82\xf0\xfc4\x83\xec\xcb\x95\x06\x9e\xd5e\xf5\x7fo\xf2\x99\x07\xa9\xe5\x958\x88\xf5U\x83\x00\xa8\x99\xa38\x1ec\x8a\x87d\xf9\xd7\x94\xeb\xfej\xf5G\xa2\xd6\xc9\xde[N|1\x08Lb\x95\xc6\x1c\xf6!\xb1\xe4TL\x08\x9a:\xbd5\xa3\xfc\xb5m\x94\xea\xff\r\x07Z3\xe7Q\xb9\x05ya!\xab\x1d_H\x82\xa4\x91\xeb\n \xe6\xe4\x90h\x1f\x8f\xcbA\xff\xcau\xa0i\xb35)\xe6\x1b\x07\x18_\xdf\x8a\x12EH\xbaec\xd9^\xbf\xa5\x88\xe26T\x94\xc8AS(\xc0\xbd\x1b\xba\xff\xd2a\xe4q\xa2\x850\xca\xc88-@3\xd3<\xfc\xe1\xce\xd3\xbf\x1d`JoK#\xb7%\x93\xb2\xb8nZ\xdfs\xf8\xae\xf4\xff\xc9\xf9Kl\x0f\xf9v\x1a{\xa2N\x82X\xb7D\x0e\xf9\xef~\x9b\xa56\x11\xf2\x8f\x0c?*\xa1\n\xd5\xad\x13\x08\x8ak\xeb6_\xac\xd2D\x01\xae)a[+3c*\xd1'\n\n\x06\xa9J\n\x8a\xe2\xca{\xa7\x8b$\xd9\xa6\xbas\xeb\xb4d-\x10\xd7\xeb\xc5\xb4\x12\xa89\xda\xec\xc6\x89g\xf9\xf9\xf9-'\xc0\xc2\xba\xaei\x03\r\xaa\xfc\xfa\x0e\x08\x9a\xc3\x8c\xa9A-"
-
-def pgpy_decrypt(key, enc_data):
-    message = pgpy.PGPMessage.from_blob(enc_data)
+def pgpy_decrypt_with_mdc(private_key, encrypted_data):
     try:
-        with key.unlock("your_passphrase"):  # Add your passphrase here if applicable
-            return key.decrypt(message).message
+        # Load the encrypted message
+        encrypted_message = pgpy.PGPMessage.from_blob(encrypted_data)
+        
+        # Decrypt the message using the private key
+        decrypted_message = private_key.decrypt(encrypted_message)
+        
+        # Check the MDC
+        if decrypted_message.trust(mdc=True):
+            print("MDC check passed. Message is intact.")
+            return decrypted_message.message
+        else:
+            print("MDC check failed. Message may have been tampered with.")
+            return None
     except pgpy.errors.PGPError as e:
         print("Decryption failed:", e)
         return None
 
-decrypted_data = pgpy_decrypt(key_decrypt, encrypted_data)
-print(decrypted_data)
+# Load the private key
+private_key, _ = pgpy.PGPKey.from_file('private_key.asc')
+
+# Encrypted data
+encrypted_data = b"Your encrypted data here"
+
+# Decrypt the message and check MDC
+decrypted_message = pgpy_decrypt_with_mdc(private_key, encrypted_data)
+if decrypted_message:
+    print("Decrypted message:", decrypted_message)
+else:
+    print("Failed to decrypt message.")
