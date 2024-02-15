@@ -1,0 +1,9 @@
+from pgpy.constants import PubKeyAlgorithm
+from pgpy import PGPKey, PGPKeyring
+
+# Generate a new RSA key
+key = PGPKey.new(PubKeyAlgorithm.RSAEncryptOrSign, 2048)
+
+# Export the key to a file
+with open('your_private_key.asc', 'w') as f:
+    f.write(str(key))
