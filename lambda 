@@ -1,0 +1,27 @@
+import boto3
+
+# Initialize the S3 client
+s3 = boto3.client('s3')
+
+def list_objects(bucket_name):
+    try:
+        # List objects in the bucket
+        response = s3.list_objects_v2(Bucket=bucket_name)
+        
+        # Extract keys from the response
+        keys = [obj['Key'] for obj in response['Contents']]
+        
+        return keys
+    except Exception as e:
+        print(f"Error listing objects in the bucket: {e}")
+        return None
+
+# Example usage
+bucket_name = 'your_bucket_name'
+object_keys = list_objects(bucket_name)
+if object_keys:
+    print("List of object keys:")
+    for key in object_keys:
+        print(key)
+else:
+    print("Failed to list object keys.")
