@@ -16,12 +16,23 @@ def list_objects(bucket_name):
         print(f"Error listing objects in the bucket: {e}")
         return None
 
-# Example usage
-bucket_name = 'your_bucket_name'
-object_keys = list_objects(bucket_name)
-if object_keys:
-    print("List of object keys:")
-    for key in object_keys:
-        print(key)
-else:
-    print("Failed to list object keys.")
+def lambda_handler(event, context):
+    # Retrieve the bucket name from the event
+    bucket_name = event['bucket_name']
+    
+    # List objects in the bucket
+    object_keys = list_objects(bucket_name)
+    
+    if object_keys:
+        print("List of object keys:")
+        for key in object_keys:
+            print(key)
+        return {
+            'statusCode': 200,
+            'body': "Object keys listed successfully."
+        }
+    else:
+        return {
+            'statusCode': 500,
+            'body': "Failed to list object keys."
+        }
