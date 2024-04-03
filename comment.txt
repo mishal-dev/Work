@@ -1,28 +1,70 @@
-import os
+module.exports = function(config) {
+  config.set({
+    // frameworks to use
+    frameworks: ['jasmine'],
 
-def comment_out_spec_files(directory):
-    # Traverse through all directories and subdirectories
-    for root, dirs, files in os.walk(directory):
-        # Loop through files in the current directory
-        for file in files:
-            # Check if the file ends with .spec.ts
-            if file.endswith(".spec.ts"):
-                # Construct the absolute path to the file
-                file_path = os.path.join(root, file)
-                
-                # Open the file for reading
-                with open(file_path, "r") as f:
-                    content = f.read()
-                
-                # Comment out the content of the file
-                commented_content = "/*" + content + "*/"
-                
-                # Open the file for writing and save the commented content
-                with open(file_path, "w") as f:
-                    f.write(commented_content)
+    // list of files / patterns to load in the browser
+    files: [
+      // your TypeScript source files and test files
+      'src/**/*.ts',
+      'test/**/*.spec.ts'
+    ],
 
-# Specify the directory where you want to comment out .spec.ts files
-directory_path = "/path/to/your/directory"
+    // preprocessors for TypeScript files
+    preprocessors: {
+      // preprocess TypeScript files for coverage
+      'src/**/*.ts': ['coverage'],
+      // preprocess test files
+      'test/**/*.spec.ts': ['typescript']
+    },
 
-# Call the function to comment out .spec.ts files in the specified directory
-comment_out_spec_files(directory_path)
+    // optionally, configure the coverage reporter
+    coverageReporter: {
+      // specify coverage report type and destination directory
+      dir: 'coverage/',
+      reporters: [
+        { type: 'html', subdir: 'html' },
+        { type: 'lcovonly', subdir: '.' }
+      ]
+    },
+
+    // optionally, configure the typescript preprocessor
+    typescriptPreprocessor: {
+      // options passed to the typescript compiler
+      options: {
+        sourceMap: true, // generate source maps
+        target: 'ES5', // specify ECMAScript target version
+        module: 'commonjs', // specify module code generation
+      },
+      transformPath: function(path) {
+        return path.replace(/\.ts$/, '.js');
+      }
+    },
+
+    // optionally, configure the typescript compiler
+    typescriptOptions: {
+      // options passed to the typescript compiler
+      compilerOptions: {
+        module: 'commonjs', // specify module code generation
+        target: 'ES5', // specify ECMAScript target version
+        sourceMap: true // generate source maps
+      }
+    },
+
+    // reporters
+    reporters: ['progress', 'coverage'],
+
+    // browsers
+    browsers: ['Chrome'],
+
+    // level of logging
+    logLevel: config.LOG_INFO,
+
+    // enable / disable watching file and executing tests whenever any file changes
+    autoWatch: true,
+
+    // start these browsers
+    // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
+    singleRun: false
+  });
+};
