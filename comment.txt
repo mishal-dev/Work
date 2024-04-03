@@ -1,70 +1,89 @@
-module.exports = function(config) {
-  config.set({
-    // frameworks to use
-    frameworks: ['jasmine'],
+import { TestBed, inject } from '@angular/core/testing';
+import { HttpClientModule, HttpClient } from '@angular/common/http';
+import { HttpTestingController, HttpClientTestingModule } from '@angular/common/http/testing';
+import { RouterTestingModule } from '@angular/router/testing';
+import { AccountDetailsService } from './account-details.service';
+import { AppStorageService } from 'src/app/app-storage.service';
+import { CookieService } from 'angular2-cookie';
+import { AccountSearch } from '../models/account-search.model';
+import { CustomerInfo } from '../models/customer-information.model';
+import { AccountInfo } from '../models/account-information.model';
+import { of, throwError } from 'rxjs';
 
-    // list of files / patterns to load in the browser
-    files: [
-      // your TypeScript source files and test files
-      'src/**/*.ts',
-      'test/**/*.spec.ts'
-    ],
+describe('AccountDetailsService', () => {
+  let service: AccountDetailsService;
+  let httpMock: HttpTestingController;
 
-    // preprocessors for TypeScript files
-    preprocessors: {
-      // preprocess TypeScript files for coverage
-      'src/**/*.ts': ['coverage'],
-      // preprocess test files
-      'test/**/*.spec.ts': ['typescript']
-    },
-
-    // optionally, configure the coverage reporter
-    coverageReporter: {
-      // specify coverage report type and destination directory
-      dir: 'coverage/',
-      reporters: [
-        { type: 'html', subdir: 'html' },
-        { type: 'lcovonly', subdir: '.' }
-      ]
-    },
-
-    // optionally, configure the typescript preprocessor
-    typescriptPreprocessor: {
-      // options passed to the typescript compiler
-      options: {
-        sourceMap: true, // generate source maps
-        target: 'ES5', // specify ECMAScript target version
-        module: 'commonjs', // specify module code generation
-      },
-      transformPath: function(path) {
-        return path.replace(/\.ts$/, '.js');
-      }
-    },
-
-    // optionally, configure the typescript compiler
-    typescriptOptions: {
-      // options passed to the typescript compiler
-      compilerOptions: {
-        module: 'commonjs', // specify module code generation
-        target: 'ES5', // specify ECMAScript target version
-        sourceMap: true // generate source maps
-      }
-    },
-
-    // reporters
-    reporters: ['progress', 'coverage'],
-
-    // browsers
-    browsers: ['Chrome'],
-
-    // level of logging
-    logLevel: config.LOG_INFO,
-
-    // enable / disable watching file and executing tests whenever any file changes
-    autoWatch: true,
-
-    // start these browsers
-    // available browser launchers: https://npmjs.org/browse/keyword/karma-launcher
-    singleRun: false
+  beforeEach(() => {
+    TestBed.configureTestingModule({
+      imports: [HttpClientModule, HttpClientTestingModule, RouterTestingModule],
+      providers: [AccountDetailsService, AppStorageService, CookieService]
+    });
+    service = TestBed.inject(AccountDetailsService);
+    httpMock = TestBed.inject(HttpTestingController);
   });
-};
+
+  afterEach(() => {
+    httpMock.verify();
+  });
+
+  it('should be created', () => {
+    expect(service).toBeTruthy();
+  });
+
+  it('should retrieve customer details', () => {
+    const mockCustomerInfo: CustomerInfo = { /* Mocked customer info */ };
+
+    service.getCustDetails(new AccountSearch()).subscribe((data: CustomerInfo) => {
+      expect(data).toEqual(mockCustomerInfo);
+    });
+
+    const req = httpMock.expectOne('expected_api_url_for_customer_details');
+    expect(req.request.method).toBe('POST');
+    req.flush(mockCustomerInfo);
+  });
+
+  it('should handle errors when retrieving customer details', () => {
+    const errorResponse = { status: 404, statusText: 'Not Found' };
+
+    service.getCustDetails(new AccountSearch()).subscribe(
+      () => {},
+      (error) => {
+        expect(error.status).toBe(404);
+        expect(error.statusText).toBe('Not Found');
+      }
+    );
+
+    const req = httpMock.expectOne('expected_api_url_for_customer_details');
+    req.flush(null, errorResponse);
+  });
+
+  it('should retrieve account details', () => {
+    const mockAccountInfo: AccountInfo = { /* Mocked account info */ };
+
+    service.getAccountDetails(new AccountSearch()).subscribe((data: AccountInfo) => {
+      expect(data).toEqual(mockAccountInfo);
+    });
+
+    const req = httpMock.expectOne('expected_api_url_for_account_details');
+    expect(req.request.method).toBe('POST');
+    req.flush(mockAccountInfo);
+  });
+
+  it('should handle errors when retrieving account details', () => {
+    const errorResponse = { status: 500, statusText: 'Internal Server Error' };
+
+    service.getAccountDetails(new AccountSearch()).subscribe(
+      () => {},
+      (error) => {
+        expect(error.status).toBe(500);
+        expect(error.statusText).toBe('Internal Server Error');
+      }
+    );
+
+    const req = httpMock.expectOne('expected_api_url_for_account_details');
+    req.flush(null, errorResponse);
+  });
+
+  // Add more test cases for other methods in AccountDetailsService
+});
